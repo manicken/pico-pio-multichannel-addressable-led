@@ -1,0 +1,89 @@
+{
+  "meta": {
+  "projectName":"pico-pio-multichannel-addressable-led",
+  "created":"2025-10-11 14:14:42",
+  "modified":"2025-11-27 11:42:53",
+  "version":1
+  },
+  "sendGroups": [
+    {"name":"Part22","note":"","items":[
+  
+    ]}
+  ],
+  "connections":{
+    "activeType": "Serial",
+    "items": [
+      {
+        "$type": "Microsan.TCPClientSettings, MicrosanProjectTerminal",
+        "Host": "192.168.50.200",
+        "Port": 82,
+        "Type": "TCP",
+        "msgPrefix": ":",
+        "msgPostfix": "\\n"
+      },
+      {
+        "$type": "Microsan.SerialSettings, MicrosanProjectTerminal",
+        "PortName": "COM7",
+        "BaudRate": 115200,
+        "Type": "Serial",
+        "msgPrefix": "",
+        "msgPostfix": "\\n"
+      },
+      {
+        "$type": "Microsan.WebsocketClientSettings, MicrosanProjectTerminal",
+        "Uri": "127.0.0.1:3000",
+        "UseSecure": false,
+        "Type": "Websocket",
+        "msgPrefix": "",
+        "msgPostfix": "\\r\\n"
+      },
+      {
+        "$type": "Microsan.HttpRestSettings, MicrosanProjectTerminal",
+        "Uri": "192.168.50.29:82",
+        "UseSecure": false,
+        "Type": "HttpRest",
+        "msgPrefix": "",
+        "msgPostfix": ""
+      },
+      {
+        "$type": "Microsan.MqttClientSettings, MicrosanProjectTerminal",
+        "Host": "localhost",
+        "Port": 1883,
+        "ClientId": "Client2",
+        "Username": "",
+        "Password": "",
+        "Topic": "test/topic",
+        "UseTLS": false,
+        "WithRetainFlag": false,
+        "WithCleanSessionFlag": true,
+        "Type": "MQTT",
+        "msgPrefix": "",
+        "msgPostfix": "\\r\\n"
+      }
+    ]
+  },
+  "sourceFiles": [
+    {
+      "fileName": "RootClass.cs",
+      "contents": "using System;\r\nusing System.Text;\r\nusing System.Windows.Forms;\r\nusing Microsan;\r\n\r\nusing System.Net;\r\nusing System.Net.Sockets;\r\n\r\nusing System.Threading;\r\n\r\n//using OxyPlot;\r\n//using OxyPlot.Series;\r\n//using OxyPlot.WindowsForms;\r\n//using System.Collections.Generic;\r\n//using System.Drawing;\r\n//using System.IO.Ports;\r\n\r\nnamespace RuntimeProgrammingNamespace\r\n{ \r\n    public class RootClass\r\n    {\r\n        private static MainForm mForm = null;\r\n        public static RichTextBox rtxt = null;\r\n       \r\n        /// <summary> The main entry point for the runtime compile code. </summary>\r\n\r\n        public static void Main(object rootObject)\r\n        {\r\n            mForm                  = rootObject as MainForm;\r\n            rtxt                   = mForm.rtxtCtrl.rtxt;\r\n            SimpleTcpServer tcpSrv = new SimpleTcpServer(82);\r\n            \r\n            tcpSrv.Start();\r\n            \r\n        }\r\n        \r\n        [Shortcut(\"Start Test1\",\"start\")]\r\n        public static void Test1()\r\n        {\r\n            MessageBox.Show(\"Test1\");\r\n        }\r\n        [Shortcut(\"Start Test2\",\"start2\")]\r\n        public static void Test2()\r\n        {\r\n            MessageBox.Show(\"Test2\");\r\n        }\r\n        [Shortcut(\"Start Test3\",\"stop\")]\r\n        public static void Test3()\r\n        {\r\n            MessageBox.Show(\"Test3\");\r\n        }\r\n    }\r\n    public class SimpleTcpServer\r\n{\r\n    private TcpListener listener;\r\n    private bool running;\r\n\r\n    public int Port { get; set; }\r\n\r\n    public SimpleTcpServer(int port)\r\n    {\r\n        Port = port;\r\n        listener = new TcpListener(IPAddress.Any, Port);\r\n    }\r\n\r\n    public void Start()\r\n    {\r\n        listener.Start();\r\n        running = true;\r\n        RuntimeProgrammingNamespace.RootClass.rtxt.AppendText(\"Server started on port \" + Port);\r\n        Console.WriteLine(\"Server started on port \" + Port);\r\n\r\n        Thread listenerThread = new Thread(ListenLoop);\r\n        listenerThread.IsBackground = true;\r\n        listenerThread.Start();\r\n    }\r\n\r\n    public void Stop()\r\n    {\r\n        running = false;\r\n        listener.Stop();\r\n        Console.WriteLine(\"Server stopped\");\r\n    }\r\n\r\n    private void ListenLoop()\r\n    {\r\n        while (running)\r\n        {\r\n            try\r\n            {\r\n                TcpClient client = listener.AcceptTcpClient();\r\n                Console.WriteLine(\"Client connected\");\r\n\r\n                Thread clientThread = new Thread(() => HandleClient(client));\r\n                clientThread.IsBackground = true;\r\n                clientThread.Start();\r\n            }\r\n            catch (SocketException)\r\n            {\r\n                // Listener stopped\r\n                break;\r\n            }\r\n        }\r\n    }\r\n\r\n    private void HandleClient(TcpClient client)\r\n    {\r\n        using (client)\r\n        {\r\n            NetworkStream stream = client.GetStream();\r\n            byte[] buffer = new byte[1024];\r\n\r\n            int bytesRead;\r\n            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0)\r\n            {\r\n                string received = Encoding.UTF8.GetString(buffer, 0, bytesRead);\r\n                Console.WriteLine(\"Received: \" + received);\r\n\r\n                byte[] response = Encoding.UTF8.GetBytes(\"Echo: \" + received);\r\n                stream.Write(response, 0, response.Length);\r\n            }\r\n\r\n            Console.WriteLine(\"Client disconnected\");\r\n        }\r\n    }\r\n}\r\n}",
+      "editorSelectionStart": 1746,
+      "editorSelectionLength": 1,
+      "editorVerticalScrollValue": 739,
+      "editorHorizontalScrollValue": 0
+    },
+    {
+      "fileName": "NewClass.cs",
+      "contents": "using System;\r\nusing System.Net;\r\nusing System.Net.Sockets;\r\nusing System.Text;\r\nusing System.Threading.Tasks;\r\nusing System.Windows.Forms;\r\nusing Microsan;\r\n\r\n\r\n",
+      "editorSelectionStart": 160,
+      "editorSelectionLength": 0,
+      "editorVerticalScrollValue": 0,
+      "editorHorizontalScrollValue": 0
+    }
+  ],
+  "window": {
+    "main": {"x":540,"y":157,"width":989,"height":740},
+    "codeEdit": {"x":894,"y":135,"width":830,"height":740},
+    "jsonEdit": {"x":1042,"y":36,"width":577,"height":740},
+  },
+  "dockData":"﻿<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<!--DockPanel configuration file. Author: Weifen Luo, all rights reserved.-->\r\n<!--!!! AUTOMATICALLY GENERATED FILE. DO NOT MODIFY !!!-->\r\n<DockPanel FormatVersion=\"1.0\" DockLeftPortion=\"350\" DockRightPortion=\"0.25\" DockTopPortion=\"0.25\" DockBottomPortion=\"0.25\" ActiveDocumentPane=\"2\" ActivePane=\"2\">\r\n  <Contents Count=\"8\">\r\n    <Content ID=\"0\" PersistString=\"Microsan.ConnectionSettingsControlDockContent\" AutoHidePortion=\"0.25\" IsHidden=\"False\" IsFloat=\"False\" />\r\n    <Content ID=\"1\" PersistString=\"Microsan.RichTextBoxControlDockContent\" AutoHidePortion=\"0.25\" IsHidden=\"False\" IsFloat=\"False\" />\r\n    <Content ID=\"2\" PersistString=\"Microsan.DataGridViewSendControlDockContent:Volumes\" AutoHidePortion=\"0.25\" IsHidden=\"False\" IsFloat=\"False\" />\r\n    <Content ID=\"3\" PersistString=\"Microsan.DataGridViewSendControlDockContent:InputStage\" AutoHidePortion=\"0.25\" IsHidden=\"False\" IsFloat=\"False\" />\r\n    <Content ID=\"4\" PersistString=\"Microsan.DataGridViewSendControlDockContent:Part3\" AutoHidePortion=\"0.25\" IsHidden=\"False\" IsFloat=\"False\" />\r\n    <Content ID=\"5\" PersistString=\"Microsan.DataGridViewSendControlDockContent:Part2\" AutoHidePortion=\"0.25\" IsHidden=\"False\" IsFloat=\"False\" />\r\n    <Content ID=\"6\" PersistString=\"Microsan.DataGridViewSendControlDockContent:dalhal2\" AutoHidePortion=\"0.25\" IsHidden=\"False\" IsFloat=\"False\" />\r\n    <Content ID=\"7\" PersistString=\"Microsan.DataGridViewSendControlDockContent:Part22\" AutoHidePortion=\"0.25\" IsHidden=\"False\" IsFloat=\"False\" />\r\n  </Contents>\r\n  <Panes Count=\"4\">\r\n    <Pane ID=\"0\" DockState=\"DockLeft\" ActiveContent=\"0\">\r\n      <Contents Count=\"1\">\r\n        <Content ID=\"0\" RefID=\"0\" />\r\n      </Contents>\r\n    </Pane>\r\n    <Pane ID=\"1\" DockState=\"DockLeft\" ActiveContent=\"1\">\r\n      <Contents Count=\"1\">\r\n        <Content ID=\"0\" RefID=\"1\" />\r\n      </Contents>\r\n    </Pane>\r\n    <Pane ID=\"2\" DockState=\"Document\" ActiveContent=\"6\">\r\n      <Contents Count=\"6\">\r\n        <Content ID=\"0\" RefID=\"6\" />\r\n        <Content ID=\"1\" RefID=\"2\" />\r\n        <Content ID=\"2\" RefID=\"3\" />\r\n        <Content ID=\"3\" RefID=\"4\" />\r\n        <Content ID=\"4\" RefID=\"5\" />\r\n        <Content ID=\"5\" RefID=\"7\" />\r\n      </Contents>\r\n    </Pane>\r\n    <Pane ID=\"3\" DockState=\"Float\" ActiveContent=\"-1\">\r\n      <Contents Count=\"1\">\r\n        <Content ID=\"0\" RefID=\"7\" />\r\n      </Contents>\r\n    </Pane>\r\n  </Panes>\r\n  <DockWindows>\r\n    <DockWindow ID=\"0\" DockState=\"Document\" ZOrderIndex=\"0\">\r\n      <NestedPanes Count=\"1\">\r\n        <Pane ID=\"0\" RefID=\"2\" PrevPane=\"-1\" Alignment=\"Right\" Proportion=\"0.5\" />\r\n      </NestedPanes>\r\n    </DockWindow>\r\n    <DockWindow ID=\"1\" DockState=\"DockLeft\" ZOrderIndex=\"1\">\r\n      <NestedPanes Count=\"2\">\r\n        <Pane ID=\"0\" RefID=\"0\" PrevPane=\"-1\" Alignment=\"Bottom\" Proportion=\"0.5\" />\r\n        <Pane ID=\"1\" RefID=\"1\" PrevPane=\"0\" Alignment=\"Bottom\" Proportion=\"0.286039453717754\" />\r\n      </NestedPanes>\r\n    </DockWindow>\r\n    <DockWindow ID=\"2\" DockState=\"DockRight\" ZOrderIndex=\"2\">\r\n      <NestedPanes Count=\"0\" />\r\n    </DockWindow>\r\n    <DockWindow ID=\"3\" DockState=\"DockTop\" ZOrderIndex=\"3\">\r\n      <NestedPanes Count=\"0\" />\r\n    </DockWindow>\r\n    <DockWindow ID=\"4\" DockState=\"DockBottom\" ZOrderIndex=\"4\">\r\n      <NestedPanes Count=\"0\" />\r\n    </DockWindow>\r\n  </DockWindows>\r\n  <FloatWindows Count=\"1\">\r\n    <FloatWindow ID=\"0\" Bounds=\"522, 227, 300, 300\" ZOrderIndex=\"0\">\r\n      <NestedPanes Count=\"1\">\r\n        <Pane ID=\"0\" RefID=\"3\" PrevPane=\"-1\" Alignment=\"Right\" Proportion=\"0.5\" />\r\n      </NestedPanes>\r\n    </FloatWindow>\r\n  </FloatWindows>\r\n</DockPanel>"
+}
